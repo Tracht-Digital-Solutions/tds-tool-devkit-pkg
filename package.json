@@ -44,6 +44,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Tracht-Digital-Solutions/tds-tool-devkit.git"
+    "url": "git+https://github.com/Tracht-Digital-Solutions/tds-tool-devkit-pkg.git"
   }
 }

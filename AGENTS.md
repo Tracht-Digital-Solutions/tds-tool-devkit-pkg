@@ -1,7 +1,7 @@
-# AGENTS.md — tds-tool-devkit
+# AGENTS.md — tds-tool-devkit-pkg
 
 A **tool package** for the TDS tools platform (JSON formatter + WCAG contrast
-checker). Read `tds-tools-contract`'s AGENTS.md for the platform model.
+checker). Read `tds-tools-contract-pkg`'s AGENTS.md for the platform model.
 
 ## Shape
 
