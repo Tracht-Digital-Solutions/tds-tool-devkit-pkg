@@ -1,6 +1,6 @@
 {
   "name": "@tracht-digital-solutions/tds-tool-devkit",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "JSON & design utilities for the TDS tools platform: JSON formatter/validator + WCAG contrast checker. Fully client-side.",
   "license": "UNLICENSED",
   "private": false,
