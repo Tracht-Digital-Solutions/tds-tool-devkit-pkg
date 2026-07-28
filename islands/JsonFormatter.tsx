@@ -6,15 +6,56 @@ interface Result {
   error?: string;
 }
 
-/** Try to point at the offending line/col from a `JSON.parse` "position N" error. */
-function locate(input: string, message: string): string {
-  const m = /position (\d+)/.exec(message);
-  if (!m) return message;
-  const pos = Number(m[1]);
+/** 1-based line/column of a character offset into `input`. */
+function lineCol(input: string, pos: number): { line: number; col: number } {
   const upto = input.slice(0, pos);
-  const line = upto.split("\n").length;
-  const col = pos - upto.lastIndexOf("\n");
-  return `${message} (Zeile ${line}, Spalte ${col})`;
+  return { line: upto.split("\n").length, col: pos - upto.lastIndexOf("\n") };
+}
+
+/**
+ * Turn a `JSON.parse` SyntaxError into a message that points at the offending
+ * spot. Engines disagree on the wording, so all three shapes are handled:
+ *
+ *  - V8 ≥ 19 often omits any offset ("Unexpected token 'o', ...\"…\" is not
+ *    valid JSON"). The offset is then recovered by re-scanning for the quoted
+ *    snippet, so the common case still gets a position.
+ *  - V8 also emits "... at position N (line L column C)" — already located, so
+ *    it must NOT get a second, German suffix appended.
+ *  - Older V8 / other engines emit a bare "at position N".
+ */
+function locate(input: string, message: string): string {
+  // Already carries its own line/column — don't duplicate it.
+  if (/line \d+ column \d+/i.test(message)) {
+    const m = /line (\d+) column (\d+)/i.exec(message)!;
+    return `${message.replace(/ at position \d+ \(line \d+ column \d+\)/i, "")} (Zeile ${m[1]}, Spalte ${m[2]})`;
+  }
+
+  const byPosition = /position (\d+)/.exec(message);
+  if (byPosition) {
+    const { line, col } = lineCol(input, Number(byPosition[1]));
+    return `${message} (Zeile ${line}, Spalte ${col})`;
+  }
+
+  // No offset at all: V8 quotes a context window plus the offending token, e.g.
+  //   Unexpected token 'o', ..."b": oops\n}" is not valid JSON
+  // Anchor on the window, then find the reported token inside it. Greedy on
+  // purpose — the window itself may contain quotes.
+  const window = /"([\s\S]*)" is not valid JSON$/.exec(message);
+  const token = /Unexpected token '(.)'/.exec(message);
+  if (window && token) {
+    const context = window[1].replace(/^\.\.\./, "");
+    const start = input.indexOf(context);
+    if (start >= 0) {
+      const at = input.indexOf(token[1], start);
+      if (at >= 0) {
+        const { line, col } = lineCol(input, at);
+        return `${message} (Zeile ${line}, Spalte ${col})`;
+      }
+    }
+  }
+
+  // Nothing recoverable — show the engine's message rather than a wrong guess.
+  return message;
 }
 
 /**
