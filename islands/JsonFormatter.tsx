@@ -95,21 +95,22 @@ export default function JsonFormatter() {
     }
   };
 
-  const area = "w-full rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-paper)] px-3 py-2 font-mono text-sm";
+  // Geometry/border/padding from the shared primitive; the pack ships no CSS.
+  const field = "field-boxed w-full font-mono text-sm";
 
   return (
     <div className="json-tool space-y-4">
       <label className="block text-sm">
         <span className="mb-1 block opacity-80">JSON eingeben</span>
-        <textarea className={area} rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder='{"hallo": "welt"}' spellcheck={false} />
+        <textarea className={field} rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder='{"hallo": "welt"}' spellcheck={false} />
       </label>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" onClick={() => run(false)} className="rounded-lg bg-[color:var(--color-primary)] px-4 py-2 text-sm text-[color:var(--color-paper)]">Formatieren</button>
-        <button type="button" onClick={() => run(true)} className="rounded-lg border border-[color:var(--color-border)] px-4 py-2 text-sm">Minimieren</button>
+        <button type="button" className="btn btn-primary" onClick={() => run(false)}>Formatieren</button>
+        <button type="button" className="btn btn-ghost" onClick={() => run(true)}>Minimieren</button>
         <label className="ml-auto flex items-center gap-2 text-sm">
           Einrückung
-          <select className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-paper)] px-2 py-1" value={indent} onChange={(e) => setIndent(Number(e.target.value) as 2 | 4 | 0)}>
+          <select className="field-boxed" value={indent} onChange={(e) => setIndent(Number(e.target.value) as 2 | 4 | 0)}>
             <option value={2}>2 Leerzeichen</option>
             <option value={4}>4 Leerzeichen</option>
             <option value={0}>Tab-frei / kompakt</option>
@@ -123,9 +124,9 @@ export default function JsonFormatter() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="status-pill status-pill--success text-sm">Gültiges JSON ✓</span>
-            <button type="button" onClick={copy} className="rounded-lg border border-[color:var(--color-border)] px-3 py-1 text-sm">{copied ? "Kopiert ✓" : "Kopieren"}</button>
+            <button type="button" className="btn btn-ghost" onClick={copy}>{copied ? "Kopiert ✓" : "Kopieren"}</button>
           </div>
-          <pre className="max-h-96 overflow-auto rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3 font-mono text-sm">{result.output}</pre>
+          <pre className="tds-card max-h-96 overflow-auto p-3 font-mono text-sm">{result.output}</pre>
         </div>
       )}
     </div>

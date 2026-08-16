@@ -54,11 +54,12 @@ export default function ContrastChecker() {
   const r = parsed?.r ?? 0;
   const rounded = r ? `${r.toFixed(2)} : 1` : "—";
 
-  const field = "w-28 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-paper)] px-2 py-1 font-mono text-sm";
+  // Geometry/border/padding from the shared primitive; the pack ships no CSS.
+  const field = "field-boxed w-28 font-mono text-sm";
 
   const swatch = (label: string, value: string, set: (v: string) => void) => (
     <div className="flex items-center gap-2">
-      <input type="color" value={parseHex(value) ? value : "#000000"} onChange={(e) => set(e.target.value)} className="h-10 w-10 rounded" aria-label={label} />
+      <input type="color" className="field-boxed h-10 w-10" value={parseHex(value) ? value : "#000000"} onChange={(e) => set(e.target.value)} aria-label={label} />
       <label className="text-sm">
         <span className="mb-1 block opacity-80">{label}</span>
         <input className={field} value={value} onChange={(e) => set(e.target.value)} />
@@ -92,7 +93,7 @@ export default function ContrastChecker() {
         )}
       </div>
 
-      <div className="rounded-xl border border-[color:var(--color-border)] p-6" style={{ background: parseHex(bg) ? bg : "#fff", color: parseHex(fg) ? fg : "#000" }}>
+      <div className="tds-card p-6" style={{ background: parseHex(bg) ? bg : "#fff", color: parseHex(fg) ? fg : "#000" }}>
         <p className="text-2xl font-semibold">Beispieltext</p>
         <p className="mt-2">
           Digitalisierung für Unternehmen — barrierefrei und lesbar für alle. Dieser Vorschautext verwendet die gewählten Farben.
