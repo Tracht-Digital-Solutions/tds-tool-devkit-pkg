@@ -28,10 +28,63 @@ function ratio(fg: [number, number, number], bg: [number, number, number]): numb
   return (hi + 0.05) / (lo + 0.05);
 }
 
-function Badge({ pass, label }: { pass: boolean; label: string }) {
+/** See the tools-site convention: labels are translated, the maths is not. */
+type Lang = "de" | "en";
+
+interface Strings {
+  pass: string;
+  fail: string;
+  textColour: string;
+  background: string;
+  invalidHex: string;
+  aaNormal: string;
+  aaLarge: string;
+  aaaNormal: string;
+  aaaLarge: string;
+  legend: string;
+  sampleHeading: string;
+  sampleBody: string;
+  sampleSmall: string;
+}
+
+/** German is the default — every existing test here asserts German labels. */
+const STRINGS = {
+  de: {
+    pass: "bestanden ✓",
+    fail: "nicht bestanden ✗",
+    textColour: "Textfarbe",
+    background: "Hintergrund",
+    invalidHex: "Bitte gültige Hex-Farben eingeben (z. B. #1f2937).",
+    aaNormal: "AA (Normal)",
+    aaLarge: "AA (Groß)",
+    aaaNormal: "AAA (Normal)",
+    aaaLarge: "AAA (Groß)",
+    legend: "„Groß“ = ab 18,66px fett bzw. 24px normal. AA verlangt 4,5:1 (normal) / 3:1 (groß), AAA 7:1 / 4,5:1.",
+    sampleHeading: "Beispieltext",
+    sampleBody: "Digitalisierung für Unternehmen — barrierefrei und lesbar für alle. Dieser Vorschautext verwendet die gewählten Farben.",
+    sampleSmall: "Kleinerer Fließtext zur Kontrollprüfung.",
+  },
+  en: {
+    pass: "passed ✓",
+    fail: "not passed ✗",
+    textColour: "Text colour",
+    background: "Background",
+    invalidHex: "Please enter valid hex colours (e.g. #1f2937).",
+    aaNormal: "AA (normal)",
+    aaLarge: "AA (large)",
+    aaaNormal: "AAA (normal)",
+    aaaLarge: "AAA (large)",
+    legend: "“Large” = from 18.66px bold or 24px regular. AA requires 4.5:1 (normal) / 3:1 (large), AAA 7:1 / 4.5:1.",
+    sampleHeading: "Sample text",
+    sampleBody: "Digitalisation for businesses — accessible and readable for everyone. This preview text uses the colours you selected.",
+    sampleSmall: "Smaller body copy for a second check.",
+  },
+} satisfies Record<Lang, Strings>;
+
+function Badge({ pass, label, t }: { pass: boolean; label: string; t: Strings }) {
   return (
     <span className={`status-pill text-sm ${pass ? "status-pill--success" : "status-pill--danger"}`}>
-      {label}: {pass ? "bestanden ✓" : "nicht bestanden ✗"}
+      {label}: {pass ? t.pass : t.fail}
     </span>
   );
 }
@@ -40,7 +93,12 @@ function Badge({ pass, label }: { pass: boolean; label: string }) {
  * WCAG colour-contrast checker — foreground vs. background, live ratio and
  * AA/AAA pass badges for normal + large text, with a preview swatch. Client-side.
  */
-export default function ContrastChecker() {
+interface Props {
+  lang?: Lang;
+}
+
+export default function ContrastChecker({ lang = "de" }: Props) {
+  const t = STRINGS[lang];
   const [fg, setFg] = useState("#1f2937");
   const [bg, setBg] = useState("#ffffff");
 
@@ -71,34 +129,30 @@ export default function ContrastChecker() {
     <div className="contrast-tool grid gap-6 md:grid-cols-2">
       <div className="space-y-4">
         <div className="flex flex-wrap gap-4">
-          {swatch("Textfarbe", fg, setFg)}
-          {swatch("Hintergrund", bg, setBg)}
+          {swatch(t.textColour, fg, setFg)}
+          {swatch(t.background, bg, setBg)}
         </div>
 
         {!parsed ? (
-          <p className="status-pill status-pill--warning text-sm">Bitte gültige Hex-Farben eingeben (z. B. #1f2937).</p>
+          <p className="status-pill status-pill--warning text-sm">{t.invalidHex}</p>
         ) : (
           <div className="space-y-3">
             <p className="text-3xl font-semibold">{rounded}</p>
             <div className="flex flex-wrap gap-2">
-              <Badge label="AA (Normal)" pass={r >= 4.5} />
-              <Badge label="AA (Groß)" pass={r >= 3} />
-              <Badge label="AAA (Normal)" pass={r >= 7} />
-              <Badge label="AAA (Groß)" pass={r >= 4.5} />
+              <Badge label={t.aaNormal} pass={r >= 4.5} t={t} />
+              <Badge label={t.aaLarge} pass={r >= 3} t={t} />
+              <Badge label={t.aaaNormal} pass={r >= 7} t={t} />
+              <Badge label={t.aaaLarge} pass={r >= 4.5} t={t} />
             </div>
-            <p className="text-xs opacity-60">
-              „Groß“ = ab 18,66px fett bzw. 24px normal. AA verlangt 4,5:1 (normal) / 3:1 (groß), AAA 7:1 / 4,5:1.
-            </p>
+            <p className="text-xs opacity-60">{t.legend}</p>
           </div>
         )}
       </div>
 
       <div className="tds-card p-6" style={{ background: parseHex(bg) ? bg : "#fff", color: parseHex(fg) ? fg : "#000" }}>
-        <p className="text-2xl font-semibold">Beispieltext</p>
-        <p className="mt-2">
-          Digitalisierung für Unternehmen — barrierefrei und lesbar für alle. Dieser Vorschautext verwendet die gewählten Farben.
-        </p>
-        <p className="mt-2 text-sm opacity-90">Kleinerer Fließtext zur Kontrollprüfung.</p>
+        <p className="text-2xl font-semibold">{t.sampleHeading}</p>
+        <p className="mt-2">{t.sampleBody}</p>
+        <p className="mt-2 text-sm opacity-90">{t.sampleSmall}</p>
       </div>
     </div>
   );

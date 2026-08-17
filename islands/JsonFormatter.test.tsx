@@ -200,3 +200,53 @@ describe("copy to clipboard", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Kopieren" })).toBeDefined());
   });
 });
+
+/**
+ * The English branch. The cases above render without props and so double as
+ * the regression test for the German default.
+ *
+ * The engine's own SyntaxError text stays untranslated — it is what a
+ * developer will paste into a search engine — but the line/column suffix this
+ * island appends follows the page language.
+ */
+describe("in English", () => {
+  it("translates the actions", () => {
+    render(<JsonFormatter lang="en" />);
+    expect(screen.getByRole("button", { name: "Format" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Minify" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Formatieren" })).toBeNull();
+  });
+
+  it("asks for input in English", async () => {
+    const u = userEvent.setup({ delay: null });
+    render(<JsonFormatter lang="en" />);
+    await u.click(screen.getByRole("button", { name: "Format" }));
+    expect(await screen.findByText("Please enter some JSON.")).toBeDefined();
+  });
+
+  it("localises the line/column suffix", async () => {
+    const u = userEvent.setup({ delay: null });
+    render(<JsonFormatter lang="en" />);
+    await u.type(screen.getByRole("textbox"), '{{"a": oops}');
+    await u.click(screen.getByRole("button", { name: "Format" }));
+    const msg = await screen.findByText(/line \d+, column \d+/);
+    expect(msg).toBeDefined();
+    expect(msg.textContent).not.toMatch(/Zeile/);
+  });
+
+  it("produces byte-identical output in both languages", async () => {
+    const u = userEvent.setup({ delay: null });
+    const { unmount } = render(<JsonFormatter lang="en" />);
+    await u.type(screen.getByRole("textbox"), '{{"b":2,"a":1}');
+    await u.click(screen.getByRole("button", { name: "Format" }));
+    await waitFor(() => expect(output()).toContain("\"b\""));
+    const en = output();
+    unmount();
+
+    render(<JsonFormatter />);
+    await u.type(screen.getByRole("textbox"), '{{"b":2,"a":1}');
+    await u.click(screen.getByRole("button", { name: "Formatieren" }));
+    await waitFor(() => expect(output()).toContain("\"b\""));
+    expect(output()).toBe(en);
+  });
+});

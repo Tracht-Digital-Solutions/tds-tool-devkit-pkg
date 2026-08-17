@@ -1,5 +1,55 @@
 import { useState } from "react";
 
+/** See the tools-site convention: labels are translated, logic is not. */
+type Lang = "de" | "en";
+
+interface Strings {
+  lineCol: (line: string | number, col: string | number) => string;
+  enterJson: string;
+  enterJsonLabel: string;
+  invalidJson: string;
+  format: string;
+  minify: string;
+  indent: string;
+  spaces: (n: number) => string;
+  compact: string;
+  valid: string;
+  copy: string;
+  copied: string;
+}
+
+/** German is the default — every existing test here asserts German labels. */
+const STRINGS = {
+  de: {
+    lineCol: (line, col) => `(Zeile ${line}, Spalte ${col})`,
+    enterJson: "Bitte JSON eingeben.",
+    enterJsonLabel: "JSON eingeben",
+    invalidJson: "Ungültiges JSON.",
+    format: "Formatieren",
+    minify: "Minimieren",
+    indent: "Einrückung",
+    spaces: (n) => `${n} Leerzeichen`,
+    compact: "Tab-frei / kompakt",
+    valid: "Gültiges JSON ✓",
+    copy: "Kopieren",
+    copied: "Kopiert ✓",
+  },
+  en: {
+    lineCol: (line, col) => `(line ${line}, column ${col})`,
+    enterJson: "Please enter some JSON.",
+    enterJsonLabel: "Enter JSON",
+    invalidJson: "Invalid JSON.",
+    format: "Format",
+    minify: "Minify",
+    indent: "Indentation",
+    spaces: (n) => `${n} spaces`,
+    compact: "Compact",
+    valid: "Valid JSON ✓",
+    copy: "Copy",
+    copied: "Copied ✓",
+  },
+} satisfies Record<Lang, Strings>;
+
 interface Result {
   ok: boolean;
   output?: string;
@@ -23,7 +73,7 @@ function lineCol(input: string, pos: number): { line: number; col: number } {
  *    it must NOT get a second, German suffix appended.
  *  - Older V8 / other engines emit a bare "at position N".
  */
-function locate(input: string, message: string): string {
+function locate(input: string, message: string, t: Strings): string {
   // Already carries its own line/column — don't duplicate it.
   if (/line \d+ column \d+/i.test(message)) {
     const m = /line (\d+) column (\d+)/i.exec(message)!;
@@ -33,7 +83,7 @@ function locate(input: string, message: string): string {
   const byPosition = /position (\d+)/.exec(message);
   if (byPosition) {
     const { line, col } = lineCol(input, Number(byPosition[1]));
-    return `${message} (Zeile ${line}, Spalte ${col})`;
+    return `${message} ${t.lineCol(line, col)}`;
   }
 
   // No offset at all: V8 quotes a context window plus the offending token, e.g.
@@ -49,7 +99,7 @@ function locate(input: string, message: string): string {
       const at = input.indexOf(token[1], start);
       if (at >= 0) {
         const { line, col } = lineCol(input, at);
-        return `${message} (Zeile ${line}, Spalte ${col})`;
+        return `${message} ${t.lineCol(line, col)}`;
       }
     }
   }
@@ -63,7 +113,12 @@ function locate(input: string, message: string): string {
  * chosen indent (or compact). Errors report an approximate line/column. Fully
  * client-side.
  */
-export default function JsonFormatter() {
+interface Props {
+  lang?: Lang;
+}
+
+export default function JsonFormatter({ lang = "de" }: Props) {
+  const t = STRINGS[lang];
   const [input, setInput] = useState("");
   const [indent, setIndent] = useState<2 | 4 | 0>(2);
   const [result, setResult] = useState<Result | null>(null);
@@ -72,7 +127,7 @@ export default function JsonFormatter() {
   const run = (minify: boolean) => {
     setCopied(false);
     if (!input.trim()) {
-      setResult({ ok: false, error: "Bitte JSON eingeben." });
+      setResult({ ok: false, error: t.enterJson });
       return;
     }
     try {
@@ -80,7 +135,7 @@ export default function JsonFormatter() {
       const output = minify ? JSON.stringify(parsed) : JSON.stringify(parsed, null, indent === 0 ? undefined : indent);
       setResult({ ok: true, output });
     } catch (e) {
-      setResult({ ok: false, error: locate(input, e instanceof Error ? e.message : "Ungültiges JSON.") });
+      setResult({ ok: false, error: locate(input, e instanceof Error ? e.message : t.invalidJson, t) });
     }
   };
 
@@ -101,19 +156,19 @@ export default function JsonFormatter() {
   return (
     <div className="json-tool space-y-4">
       <label className="block text-sm">
-        <span className="mb-1 block opacity-80">JSON eingeben</span>
+        <span className="mb-1 block opacity-80">{t.enterJsonLabel}</span>
         <textarea className={field} rows={8} value={input} onChange={(e) => setInput(e.target.value)} placeholder='{"hallo": "welt"}' spellcheck={false} />
       </label>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className="btn btn-primary" onClick={() => run(false)}>Formatieren</button>
-        <button type="button" className="btn btn-ghost" onClick={() => run(true)}>Minimieren</button>
+        <button type="button" className="btn btn-primary" onClick={() => run(false)}>{t.format}</button>
+        <button type="button" className="btn btn-ghost" onClick={() => run(true)}>{t.minify}</button>
         <label className="ml-auto flex items-center gap-2 text-sm">
-          Einrückung
+          {t.indent}
           <select className="field-boxed" value={indent} onChange={(e) => setIndent(Number(e.target.value) as 2 | 4 | 0)}>
-            <option value={2}>2 Leerzeichen</option>
-            <option value={4}>4 Leerzeichen</option>
-            <option value={0}>Tab-frei / kompakt</option>
+            <option value={2}>{t.spaces(2)}</option>
+            <option value={4}>{t.spaces(4)}</option>
+            <option value={0}>{t.compact}</option>
           </select>
         </label>
       </div>
@@ -123,8 +178,8 @@ export default function JsonFormatter() {
       {result?.ok && result.output !== undefined && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="status-pill status-pill--success text-sm">Gültiges JSON ✓</span>
-            <button type="button" className="btn btn-ghost" onClick={copy}>{copied ? "Kopiert ✓" : "Kopieren"}</button>
+            <span className="status-pill status-pill--success text-sm">{t.valid}</span>
+            <button type="button" className="btn btn-ghost" onClick={copy}>{copied ? t.copied : t.copy}</button>
           </div>
           <pre className="tds-card max-h-96 overflow-auto p-3 font-mono text-sm">{result.output}</pre>
         </div>

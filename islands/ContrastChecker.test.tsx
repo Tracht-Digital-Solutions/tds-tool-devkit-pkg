@@ -146,3 +146,37 @@ describe("WCAG pass badges", () => {
     }
   });
 });
+
+/**
+ * The English branch. Every case above renders without props, so they are
+ * also the regression test for the German default.
+ *
+ * The WCAG thresholds are NOT translated — the whole point of the tool is
+ * that 4.5:1 is 4.5:1 in every language, so the last case pins that both
+ * renderings judge the same colour pair identically.
+ */
+describe("in English", () => {
+  it("translates the inputs and the verdicts", () => {
+    render(<ContrastChecker lang="en" />);
+    // Each colour has TWO controls sharing one label — the swatch and the
+    // hex field — which is why the repo helper above selects by type.
+    expect(screen.getAllByLabelText("Text colour").length).toBe(2);
+    expect(screen.getAllByLabelText("Background").length).toBe(2);
+    expect(screen.getAllByText(/passed ✓/).length).toBeGreaterThan(0);
+    expect(screen.queryAllByLabelText("Textfarbe")).toHaveLength(0);
+  });
+
+  it("reports an unparseable colour in English", async () => {
+    render(<ContrastChecker lang="en" />);
+    await type("Text colour", "nonsense");
+    expect(await screen.findByText(/valid hex colours/)).toBeDefined();
+  });
+
+  it("computes the same ratio in both languages", () => {
+    const { unmount } = render(<ContrastChecker lang="en" />);
+    const en = screen.getByText(/: 1$/).textContent;
+    unmount();
+    render(<ContrastChecker />);
+    expect(screen.getByText(/: 1$/).textContent).toBe(en);
+  });
+});
