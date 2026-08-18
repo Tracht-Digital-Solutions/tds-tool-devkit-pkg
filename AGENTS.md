@@ -27,7 +27,8 @@ docblock; the manifest suite runs in node.
 ## Gotchas
 
 - **This pack ships NO CSS — every control must carry a shared class.** The tools
-  site renders on the `panel` surface, and a surface layer only sets tokens: they
+  site renders the `blog` surface in its `data-flat` variant (it was `panel`
+  until 2026-08-17), and a surface layer only sets tokens: they
   reach an element through `btn` / `chip` / `field-boxed` / `tds-card`. A
   `<button>` without `btn` therefore has no padding, no radius and no 44px touch
   target, and an `<input>` without `field-boxed` renders **invisible**, because
@@ -37,6 +38,17 @@ docblock; the manifest suite runs in node.
   after the site had moved to the panel. That is why the tools rounded differently
   from the panels. `npm run lint:primitives` runs in CI and fails on a bare
   control; the script is a byte-identical copy of the seed in `tds-ext-template-pkg`.
+- **The contrast SAMPLE panel is the one element here that draws its own 1px
+  line, and it has to.** Every other edge in this pack comes from a shared
+  class and therefore from `--tds-border-hairline`, which the tools site sets
+  to 0 (`data-flat`). But the sample panel's FILL IS THE USER'S — at the
+  default `#ffffff` it is the same white as the `.tds-card` behind it, so
+  borderless it has no boundary at all and nothing shows which region is being
+  measured. It uses `outline` (outside the fill, `outlineOffset: -1px`) rather
+  than `border`, so the line cannot be mistaken for part of the colour pair
+  under test, and `var(--color-line)` so it follows the theme. Do not
+  "clean this up" into a shared class: a fill only separates against a
+  DIFFERENT ground, and this one is arbitrary by design.
 - **Never hand-author a radius, and do not reach for `rounded-[var(--tds-radius-*)]`
   either.** Tailwind does not generate arbitrary values out of a package inside
   `node_modules`, so from here that ships as no rule at all. Use the shared class.

@@ -149,7 +149,27 @@ export default function ContrastChecker({ lang = "de" }: Props) {
         )}
       </div>
 
-      <div className="tds-card p-6" style={{ background: parseHex(bg) ? bg : "#fff", color: parseHex(fg) ? fg : "#000" }}>
+      {/* The sample panel keeps a literal 1px outline of its own, and it is the
+          one place in this pack that may. Every other edge here goes through
+          `--tds-border-hairline`, which the tools site zeroes (`data-flat`) —
+          but this panel's FILL IS THE USER'S, so it cannot be relied on to
+          separate the sample from the card behind it. At the default #ffffff
+          on the site's white card the two grounds are identical and the sample
+          area has no boundary at all: the text still renders, and nothing shows
+          the visitor what region is being measured.
+
+          `--color-line` rather than a fixed grey so it follows the theme, and
+          the outline sits OUTSIDE the fill (`outline`, not `border`) so it
+          cannot be mistaken for part of the colour pair under test. */}
+      <div
+        className="tds-card p-6"
+        style={{
+          background: parseHex(bg) ? bg : "#fff",
+          color: parseHex(fg) ? fg : "#000",
+          outline: "1px solid var(--color-line)",
+          outlineOffset: "-1px",
+        }}
+      >
         <p className="text-2xl font-semibold">{t.sampleHeading}</p>
         <p className="mt-2">{t.sampleBody}</p>
         <p className="mt-2 text-sm opacity-90">{t.sampleSmall}</p>
