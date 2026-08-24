@@ -234,6 +234,20 @@ describe("in English", () => {
     expect(msg.textContent).not.toMatch(/Zeile/);
   });
 
+  it("localises the suffix when V8 ALREADY reported a line and column", async () => {
+    // `{a:1}` makes V8 emit "... at position 1 (line 1 column 2)", which takes
+    // the one branch of `locate()` that does not need to compute a position —
+    // and that branch interpolated German directly, so this exact case read
+    // "Zeile 1, Spalte 2" on an English page. The test above cannot see it: its
+    // input has no position at all and goes down the context-window branch.
+    const u = userEvent.setup({ delay: null });
+    render(<JsonFormatter lang="en" />);
+    await u.type(screen.getByRole("textbox"), "{{a:1}");
+    await u.click(screen.getByRole("button", { name: "Format" }));
+    const msg = await screen.findByText(/line \d+, column \d+/);
+    expect(msg.textContent).not.toMatch(/Zeile|Spalte/);
+  });
+
   it("produces byte-identical output in both languages", async () => {
     const u = userEvent.setup({ delay: null });
     const { unmount } = render(<JsonFormatter lang="en" />);

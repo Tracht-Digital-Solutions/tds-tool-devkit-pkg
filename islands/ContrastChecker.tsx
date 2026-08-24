@@ -137,7 +137,8 @@ export default function ContrastChecker({ lang = "de" }: Props) {
           <p className="status-pill status-pill--warning text-sm">{t.invalidHex}</p>
         ) : (
           <div className="space-y-3">
-            <p className="text-3xl font-semibold">{rounded}</p>
+            {/* Changing a colour recomputes this silently otherwise. */}
+            <p className="text-3xl font-semibold" aria-live="polite">{rounded}</p>
             <div className="flex flex-wrap gap-2">
               <Badge label={t.aaNormal} pass={r >= 4.5} t={t} />
               <Badge label={t.aaLarge} pass={r >= 3} t={t} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** See the tools-site convention: labels are translated, logic is not. */
 type Lang = "de" | "en";
@@ -70,14 +70,17 @@ function lineCol(input: string, pos: number): { line: number; col: number } {
  *    valid JSON"). The offset is then recovered by re-scanning for the quoted
  *    snippet, so the common case still gets a position.
  *  - V8 also emits "... at position N (line L column C)" — already located, so
- *    it must NOT get a second, German suffix appended.
+ *    it must NOT get a second suffix appended. It is re-formatted through
+ *    `t.lineCol` like every other branch: this one interpolated German
+ *    directly, so an English page read "Zeile 3, Spalte 12" in exactly the
+ *    case where the engine supplies its own position.
  *  - Older V8 / other engines emit a bare "at position N".
  */
 function locate(input: string, message: string, t: Strings): string {
   // Already carries its own line/column — don't duplicate it.
   if (/line \d+ column \d+/i.test(message)) {
     const m = /line (\d+) column (\d+)/i.exec(message)!;
-    return `${message.replace(/ at position \d+ \(line \d+ column \d+\)/i, "")} (Zeile ${m[1]}, Spalte ${m[2]})`;
+    return `${message.replace(/ at position \d+ \(line \d+ column \d+\)/i, "")} ${t.lineCol(m[1], m[2])}`;
   }
 
   const byPosition = /position (\d+)/.exec(message);
@@ -123,6 +126,11 @@ export default function JsonFormatter({ lang = "de" }: Props) {
   const [indent, setIndent] = useState<2 | 4 | 0>(2);
   const [result, setResult] = useState<Result | null>(null);
   const [copied, setCopied] = useState(false);
+  /** Pending "copied" reset, cleared on unmount. */
+  const copyReset = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (copyReset.current !== null) clearTimeout(copyReset.current);
+  }, []);
 
   const run = (minify: boolean) => {
     setCopied(false);
@@ -144,7 +152,10 @@ export default function JsonFormatter({ lang = "de" }: Props) {
     try {
       await navigator.clipboard.writeText(result.output);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      // Tracked so unmount can clear it: a pending timer would otherwise set
+      // state on a component the navigation already tore down.
+      if (copyReset.current !== null) clearTimeout(copyReset.current);
+      copyReset.current = setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);
     }
