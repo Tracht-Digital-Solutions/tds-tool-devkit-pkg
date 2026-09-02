@@ -134,7 +134,7 @@ export default function ContrastChecker({ lang = "de" }: Props) {
         </div>
 
         {!parsed ? (
-          <p className="status-pill status-pill--warning text-sm">{t.invalidHex}</p>
+          <p className="tds-alert tds-alert--warning">{t.invalidHex}</p>
         ) : (
           <div className="space-y-3">
             {/* Changing a colour recomputes this silently otherwise. */}

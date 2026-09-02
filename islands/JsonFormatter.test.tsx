@@ -147,7 +147,11 @@ describe("validation errors", () => {
     await clickFormat();
 
     await waitFor(() => expect(screen.queryByText("Gültiges JSON ✓")).toBeNull());
-    expect(screen.getByText(/./, { selector: ".status-pill--danger" })).toBeDefined();
+    // `.tds-alert--danger` und nicht `.status-pill--danger`: die Meldung traegt
+    // die Fehlerbeschreibung des Browsers und ist damit beliebig lang. In einer
+    // Plakette (`white-space: nowrap`) machte sie das Dokument breiter als das
+    // Fenster — auf 390px gemessene 460px, unsichtbar hinter overflow-x: hidden.
+    expect(screen.getByText(/./, { selector: ".tds-alert--danger" })).toBeDefined();
   });
 
   it("clears a previous success when the next input is invalid", async () => {

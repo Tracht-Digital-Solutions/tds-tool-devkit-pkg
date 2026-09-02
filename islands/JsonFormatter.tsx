@@ -184,7 +184,7 @@ export default function JsonFormatter({ lang = "de" }: Props) {
         </label>
       </div>
 
-      {result?.ok === false && <p className="status-pill status-pill--danger text-sm">{result.error}</p>}
+      {result?.ok === false && <p className="tds-alert tds-alert--danger">{result.error}</p>}
 
       {result?.ok && result.output !== undefined && (
         <div className="space-y-2">
