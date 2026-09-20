@@ -184,10 +184,12 @@ export default function JsonFormatter({ lang = "de" }: Props) {
         </label>
       </div>
 
-      {result?.ok === false && <p className="tds-alert tds-alert--danger">{result.error}</p>}
+      {result?.ok === false && <p className="tds-alert tds-alert--danger tds-appear">{result.error}</p>}
 
       {result?.ok && result.output !== undefined && (
-        <div className="space-y-2">
+        // tds-appear (tds-shared): the answer fades into place as it is
+        // inserted. CSS only — a public tool ships no animation runtime.
+        <div className="space-y-2 tds-appear">
           <div className="flex items-center justify-between">
             <span className="status-pill status-pill--success text-sm">{t.valid}</span>
             <button type="button" className="btn btn-ghost" onClick={copy}>{copied ? t.copied : t.copy}</button>
