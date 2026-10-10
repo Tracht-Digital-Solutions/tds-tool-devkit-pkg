@@ -66,7 +66,7 @@ function CodeBlock({ code, t, canCopy }: { code: string; t: Strings; canCopy: bo
         </button>
         {!canCopy && <span className="text-sm opacity-80">{t.code.copyLocked}</span>}
       </div>
-      <pre className="dss-code tds-card max-h-96 overflow-auto p-4 font-mono text-xs leading-relaxed" tabIndex={0}>
+      <pre className="dss-code max-h-96 overflow-auto p-4 font-mono text-xs leading-relaxed" style={{ background: "var(--color-soft)", margin: 0 }} tabIndex={0}>
         <code>{nodes}</code>
       </pre>
     </div>

@@ -15,7 +15,7 @@ export function PremiumBox({ t, lang, access }: { t: Strings; lang: Lang; access
   if (access.entitled) return <p className="tds-alert tds-alert--success text-sm">{t.premium.active}</p>;
   const price = access.priceCents > 0 ? (access.priceCents / 100).toLocaleString(lang === "de" ? "de-DE" : "en-GB", { style: "currency", currency: access.currency || "EUR" }) : null;
   return (
-    <div className="tds-card grid gap-3 p-4">
+    <div className="grid gap-3 p-4" style={{ background: "var(--color-soft)" }}>
       <p className="flex flex-wrap items-center gap-2 font-semibold">
         <span className="chip chip--warning">{t.premium.title}</span>
       </p>
@@ -90,7 +90,7 @@ export function ExportStep({ t, lang, project, access }: { t: Strings; lang: Lan
           const premium = access.formats[f] === "premium";
           const allowed = mayExport(access, f);
           return (
-            <li key={f} className="tds-card grid content-between gap-3 p-4">
+            <li key={f} className="grid content-between gap-3 p-4" style={{ background: "var(--color-soft)" }}>
               <div className="grid gap-1">
                 <p className="flex flex-wrap items-center gap-2 font-semibold">
                   {FORMAT_LABELS[f][lang]}
@@ -234,7 +234,7 @@ export function ProjectsPanel({
       ) : (
         <ul className="grid gap-2">
           {items.map((p) => (
-            <li key={p.id} className="tds-card grid gap-2 p-3">
+            <li key={p.id} className="grid gap-2 p-3" style={{ background: "var(--color-soft)" }}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-semibold">
                   {p.name}

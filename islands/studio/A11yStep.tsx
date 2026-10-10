@@ -25,7 +25,9 @@ export function A11yStep({
   onShow: (themeId: string | undefined) => void;
 }) {
   const report = useMemo(() => auditProject(resolved), [resolved]);
-  const [filter, setFilter] = useState<Filter>(report.counts.fail > 0 ? "problems" : "all");
+  // Open where the work is: problems if any, else the notes — never the
+  // full list of ~90 entries, which buries what matters.
+  const [filter, setFilter] = useState<Filter>(report.counts.fail > 0 ? "problems" : report.counts.warn > 0 ? "warn" : "pass");
   const [themeId, setThemeId] = useState<string>("all");
   const [pending, setPending] = useState<string | null>(null);
   const [applied, setApplied] = useState<string | null>(null);
@@ -87,12 +89,13 @@ export function A11yStep({
         <Segmented label={t.preview.theme} value={themeId} options={[["all", t.a11y.allThemes] as [string, string], ...resolved.themes.map((th) => [th.def.id, th.def.name] as [string, string])]} onChange={setThemeId} />
       </div>
       {applied && <p className="tds-alert tds-alert--success text-sm">{t.a11y.applied}</p>}
+      {report.counts.fail === 0 && !applied && <p className="tds-alert tds-alert--success text-sm">{t.a11y.noProblems}</p>}
       {visible.length === 0 ? (
         <p className="tds-empty">{t.a11y.none}</p>
       ) : (
         <ul className="grid gap-3">
           {visible.map((f) => (
-            <li key={f.id} className="tds-card grid gap-2 p-4">
+            <li key={f.id} className="grid gap-2 p-4" style={{ background: "var(--color-soft)" }}>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={PILL[f.status]}>{t.a11y.status[f.status]}</span>
                 <span className="text-sm font-semibold">

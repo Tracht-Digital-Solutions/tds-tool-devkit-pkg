@@ -7,7 +7,8 @@ import { COLOR_ROLES } from "../../src/studio/themes";
 import { getPath } from "../../src/studio/model";
 import type { Action } from "../../src/studio/state";
 import { manualCount } from "../../src/studio/state";
-import { ColorInput, Field, NumberInput, SelectInput, Segmented, SourceBadge, TextInput, Toggle } from "./controls";
+import { ColorInput, Field, NumberInput, Section, SelectInput, Segmented, SourceBadge, TextInput, Toggle } from "./controls";
+import { ChoiceCard } from "./Layout";
 import { ComponentEditor } from "./ComponentEditor";
 import type { Strings } from "./strings";
 
@@ -138,39 +139,38 @@ export function SystemStep({
 
       {tab === "variants" && (
         <div className="grid gap-4">
-          <p className="eyebrow">{t.system.variantTitle}</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <h3 className="eyebrow">{t.system.variantTitle}</h3>
+          <div className="grid gap-3">
             {variantSamples.map(({ v, r }) => {
               const [name, text] = t.system.variants[v]!;
               const tk = r.tokens;
               const light = r.themes[0]!.colors;
               return (
-                <button
-                  key={v}
-                  type="button"
-                  className={`btn ${project.variant === v ? "btn-primary" : "btn-ghost"} h-auto w-full flex-col items-start gap-2 whitespace-normal p-4 text-left`}
-                  aria-pressed={project.variant === v}
-                  onClick={() => dispatch({ type: "variant", variant: v as VariantId })}
-                >
-                  <span className="font-semibold">{name}</span>
-                  <span className="text-sm font-normal opacity-80">{text}</span>
-                  <span
-                    aria-hidden="true"
-                    className="inline-block px-4 py-2 text-sm"
-                    style={{
-                      background: light.primary,
-                      color: light.onPrimary,
-                      borderRadius: tk.radius.button >= 999 ? 999 : tk.radius.button,
-                      fontFamily: tk.font.heading,
-                      fontWeight: 600,
-                      textTransform: tk.style.buttonCase,
-                      letterSpacing: `${tk.style.buttonTracking}em`,
-                      boxShadow: tk.shadow.sm === "none" ? undefined : tk.shadow.sm,
-                    }}
-                  >
-                    Aa · {t.preview.views.components}
+                <ChoiceCard key={v} title={name} text={text} selected={project.variant === v} onSelect={() => dispatch({ type: "variant", variant: v as VariantId })} t={t}>
+                  {/* Same seed, this variant: palette, heading face, button shape. */}
+                  <span aria-hidden="true" className="flex flex-wrap items-center gap-3">
+                    <span className="flex gap-1">
+                      {[light.primary, light.secondary, light.accent, light.text, light.surfaceAlt].map((c, i) => (
+                        <span key={i} style={{ width: 16, height: 16, borderRadius: 999, background: c, boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.12)" }} />
+                      ))}
+                    </span>
+                    <span style={{ fontFamily: tk.font.heading, fontWeight: tk.font.headingWeight, fontSize: 18, textTransform: tk.font.headingTransform }}>Aa</span>
+                    <span
+                      className="inline-block px-3 py-1 text-xs"
+                      style={{
+                        background: light.primary,
+                        color: light.onPrimary,
+                        borderRadius: tk.radius.button >= 999 ? 999 : tk.radius.button,
+                        fontWeight: 600,
+                        textTransform: tk.style.buttonCase,
+                        letterSpacing: `${tk.style.buttonTracking}em`,
+                        boxShadow: tk.shadow.sm === "none" ? undefined : tk.shadow.sm,
+                      }}
+                    >
+                      Button
+                    </span>
                   </span>
-                </button>
+                </ChoiceCard>
               );
             })}
           </div>
@@ -182,9 +182,8 @@ export function SystemStep({
 
       {tab === "tokens" && (
         <div className="grid gap-6">
-          {tokenGroups(t).map(([title, items]) => (
-            <fieldset key={title} className="grid gap-4">
-              <legend className="eyebrow mb-1">{title}</legend>
+          {tokenGroups(t).map(([title, items], gi) => (
+            <Section key={title} title={title} open={gi === 0}>
               {items.map(([path, control]) => {
                 const value = getPath(resolved.tokens, path) as string | number | boolean;
                 const source = resolved.tokenSource[path];
@@ -198,18 +197,19 @@ export function SystemStep({
                     tech={path}
                     aside={
                       <span className="flex flex-wrap items-center gap-1">
-                        <SourceBadge source={source} t={t} />
+                        {source !== "derived" && <SourceBadge source={source} t={t} />}
                         <button
                           type="button"
-                          className="btn btn-ghost px-2 py-0 text-xs"
+                          className={locked ? "chip chip-active text-xs" : "chip text-xs"}
                           aria-pressed={locked}
+                          title={locked ? t.system.unlock : t.system.lock}
                           onClick={() => dispatch(locked ? { type: "unlock", path } : { type: "lock", path, value })}
                         >
-                          {locked ? t.system.unlock : t.system.lock}
+                          {locked ? `🔒 ${t.layout.locked}` : t.system.lock}
                         </button>
                         {source === "manual" && (
-                          <button type="button" className="btn btn-ghost px-2 py-0 text-xs" onClick={() => dispatch({ type: "resetGlobal", path })}>
-                            {t.system.reset}
+                          <button type="button" className="chip text-xs" onClick={() => dispatch({ type: "resetGlobal", path })}>
+                            ↺ {t.system.reset}
                           </button>
                         )}
                       </span>
@@ -234,7 +234,7 @@ export function SystemStep({
                   </Field>
                 );
               })}
-            </fieldset>
+            </Section>
           ))}
         </div>
       )}
@@ -300,7 +300,7 @@ function ThemesPanel({
   return (
     <div className="grid gap-5">
       <Segmented label={t.system.themes} value={theme.def.id} options={project.themes.map((th) => [th.id, th.name])} onChange={setThemeId} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4">
         <Field label={t.system.themeName}>
           <TextInput label={t.system.themeName} value={theme.def.name} onChange={(v) => dispatch({ type: "themeUpdate", id: theme.def.id, name: v })} />
         </Field>
@@ -314,8 +314,7 @@ function ThemesPanel({
       <p className="text-sm opacity-80">
         <code>data-theme="{theme.def.id}"</code> · {t.system.roleHint}
       </p>
-      <fieldset className="grid gap-3">
-        <legend className="eyebrow mb-1">{t.system.roles}</legend>
+      <Section title={t.system.roles} open>
         {COLOR_ROLES.map((role) => (
           <Field
             key={role}
@@ -335,7 +334,7 @@ function ThemesPanel({
             <ColorInput value={theme.colors[role]} label={role} t={t} expert={mode === "expert"} onChange={(v) => dispatch({ type: "themeRole", id: theme.def.id, role, value: v })} />
           </Field>
         ))}
-      </fieldset>
+      </Section>
       {project.themes.length > 1 && (
         <div>
           <button
@@ -350,7 +349,7 @@ function ThemesPanel({
           </button>
         </div>
       )}
-      <fieldset className="grid gap-3 sm:grid-cols-4 sm:items-end">
+      <fieldset className="grid gap-3 p-4" style={{ background: "var(--color-soft)" }}>
         <legend className="eyebrow mb-1">{t.system.addTheme}</legend>
         <Field label={t.system.themeName}>
           <input className="field-boxed w-full" value={name} onChange={(e) => setName(e.target.value)} />

@@ -33,6 +33,19 @@ under the same id, sold through `tds-ext-tools-pkg`'s checkout.
 `policy.ts` `DEFAULT_PREMIUM` must equal `StudioPolicy::DEFAULT_PREMIUM` in
 `tds-ext-tools-pkg`.
 
+## UI structure
+
+- `islands/studio/Layout.tsx` is the frame every step uses: `Stepper` (progress fill + steps,
+  `aria-current="step"`, done steps ticked), `StepIntro` (title + one sentence, copy in
+  `strings.layout.intro`), `Workspace` (settings | sticky preview; preview first on a phone),
+  `PreviewToolbar`, `ChoiceCard`, `StepFooter` (the next button names its target).
+- Areas are separated by fill (`--color-soft`), not by nested `tds-card`s — their offset
+  shadows stacked into noise inside the tool card.
+- The manifest sets `layout: "wide"` (contract ≥ 1.2.0): the site gives the studio the full
+  content width. A sticky preview needs `self-start`; a stretched grid item never sticks.
+- Long lists open where the work is: token groups collapsed except colours, the a11y list on
+  problems → notes → passes, never "all".
+
 ## URL analysis
 
 The fetch (one HTTPS page + its stylesheets, SSRF-guarded) is PHP in `tds-ext-tools-pkg`;

@@ -22,6 +22,16 @@ function mockFetch(routes: Record<string, Answer | ((init?: RequestInit) => Answ
   return fn;
 }
 
+/** A step in the stepper; its number is decorative (aria-hidden). */
+const stepButton = (name: string) => within(screen.getByRole("navigation", { name: "Arbeitsschritte" })).getByRole("button", { name });
+
+const variantButton = (name: string) => within(screen.getByRole("heading", { name }).closest("article")!).getByRole("button");
+
+function startDesigning() {
+  fireEvent.click(screen.getByRole("button", { name: "Komponente gestalten" }));
+  fireEvent.click(screen.getByRole("button", { name: /Komponente gestalten →/ }));
+}
+
 const guest = { enabled: true, authenticated: false, entitled: false, formats: defaultPolicy(), priceCents: 900, currency: "EUR", analysisEnabled: true, projectLimit: 50 };
 
 beforeEach(() => {
@@ -39,24 +49,23 @@ describe("Designsystem-Studio", () => {
     render(<Studio lang="de" />);
 
     // Later steps are locked until the system exists.
-    expect((screen.getByRole("button", { name: /3\. Designsystem/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect((stepButton("Designsystem") as HTMLButtonElement).disabled).toBe(true);
 
-    fireEvent.click(screen.getByRole("button", { name: /Neue Komponente gestalten/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Gestalten" }));
-    expect(screen.getByRole("heading", { name: "Komponente gestalten" })).toBeTruthy();
+    startDesigning();
+    expect(screen.getByRole("heading", { name: "Ausgangskomponente gestalten" })).toBeTruthy();
 
     // Change the corner radius through a preset and the font size directly.
     fireEvent.click(screen.getByRole("button", { name: "Pille" }));
     expect(screen.getByRole("button", { name: "Pille" }).getAttribute("aria-pressed")).toBe("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Designsystem erzeugen" }));
-    expect(screen.getByRole("button", { name: /3\. Designsystem/ }).getAttribute("aria-current")).toBe("step");
-    expect(screen.getByRole("button", { name: /Verspielt/ })).toBeTruthy();
-    expect(screen.getByText(/Ihre Arbeit bleibt nur in diesem Browserfenster/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Designsystem erzeugen/ }));
+    expect(stepButton("Designsystem").getAttribute("aria-current")).toBe("step");
+    expect(variantButton("Verspielt")).toBeTruthy();
+    expect(screen.getByText("Nicht gespeichert")).toBeTruthy();
 
     // Variant switch keeps working state.
-    fireEvent.click(screen.getByRole("button", { name: /Technisch/ }));
-    expect(screen.getByRole("button", { name: /Technisch/ }).getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(variantButton("Technisch"));
+    expect(variantButton("Technisch").getAttribute("aria-pressed")).toBe("true");
 
     expect(setItem).not.toHaveBeenCalled();
   });
@@ -64,8 +73,8 @@ describe("Designsystem-Studio", () => {
   it("renders the preview in a sandbox without scripts, forms or navigation", async () => {
     mockFetch({ "/tools/studio/access": { body: guest } });
     const { container } = render(<Studio lang="en" />);
-    fireEvent.click(screen.getByRole("button", { name: /Design a new component/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Design" }));
+    fireEvent.click(screen.getByRole("button", { name: "Design a component" }));
+    fireEvent.click(screen.getByRole("button", { name: /Design a component →/ }));
     const frame = container.querySelector("iframe")!;
     expect(frame.getAttribute("sandbox")).toBe("allow-same-origin");
     const doc = frame.getAttribute("srcdoc") ?? (frame as HTMLIFrameElement & { srcdoc: string }).srcdoc;
@@ -86,10 +95,9 @@ describe("Designsystem-Studio", () => {
     });
     vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:x"), revokeObjectURL: vi.fn() }));
     render(<Studio lang="de" />);
-    fireEvent.click(screen.getByRole("button", { name: /Neue Komponente gestalten/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Gestalten" }));
-    fireEvent.click(screen.getByRole("button", { name: "Designsystem erzeugen" }));
-    fireEvent.click(screen.getByRole("button", { name: /7\. Export/ }));
+    startDesigning();
+    fireEvent.click(screen.getByRole("button", { name: /Designsystem erzeugen/ }));
+    fireEvent.click(stepButton("Export & Projekte"));
 
     await waitFor(() => expect(fetchMock.mock.calls.some(([u]) => String(u).endsWith("/tools/studio/access"))).toBe(true));
     const scss = screen.getByText("SCSS").closest("li")!;
@@ -117,10 +125,9 @@ describe("Designsystem-Studio", () => {
       },
     });
     render(<Studio lang="de" />);
-    fireEvent.click(screen.getByRole("button", { name: /Neue Komponente gestalten/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Gestalten" }));
-    fireEvent.click(screen.getByRole("button", { name: "Designsystem erzeugen" }));
-    fireEvent.click(screen.getByRole("button", { name: /7\. Export/ }));
+    startDesigning();
+    fireEvent.click(screen.getByRole("button", { name: /Designsystem erzeugen/ }));
+    fireEvent.click(stepButton("Export & Projekte"));
     const save = await screen.findByRole("button", { name: "Speichern" });
     fireEvent.click(save);
     await screen.findByText("Projekt gespeichert.");
@@ -130,13 +137,12 @@ describe("Designsystem-Studio", () => {
   it("runs the accessibility check and applies a suggestion", async () => {
     mockFetch({ "/tools/studio/access": { body: guest } });
     render(<Studio lang="de" />);
-    fireEvent.click(screen.getByRole("button", { name: /Neue Komponente gestalten/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Gestalten" }));
+    startDesigning();
     // Pale background with white text: a contrast problem the check must find.
     const bg = screen.getAllByLabelText("Hintergrundfarbe (CSS)")[0]!;
     fireEvent.change(bg, { target: { value: "#bae6fd" } });
-    fireEvent.click(screen.getByRole("button", { name: "Designsystem erzeugen" }));
-    fireEvent.click(screen.getByRole("button", { name: /6\. Barrierefreiheit/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Designsystem erzeugen/ }));
+    fireEvent.click(stepButton("Barrierefreiheit"));
     expect(screen.getAllByText("Problem").length).toBeGreaterThan(0);
     expect(screen.getByText(/keine Konformitätsbestätigung/)).toBeTruthy();
     const apply = screen.getAllByRole("button", { name: "Vorschlag übernehmen" })[0]!;

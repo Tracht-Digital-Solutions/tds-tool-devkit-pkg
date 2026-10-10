@@ -6,6 +6,7 @@ import { SEED_KINDS, VARIANTS, type DesignProject, type SeedKind, type VariantId
 import { previewBody } from "../../src/studio/previews";
 import { resolveProject } from "../../src/studio/resolve";
 import { Field, Segmented } from "./controls";
+import { ChoiceCard } from "./Layout";
 import { PreviewFrame } from "./PreviewFrame";
 import type { Lang, Strings } from "./strings";
 
@@ -28,35 +29,87 @@ export function StartStep({
   const [path, setPath] = useState<"a" | "b" | "c" | null>(null);
   const [kind, setKind] = useState<SeedKind>("button");
 
-  const card = (id: "a" | "b" | "c", title: string, text: string) => (
-    <button type="button" className={`btn ${path === id ? "btn-primary" : "btn-ghost"} dss-entry h-auto w-full flex-col items-start gap-1 whitespace-normal p-4 text-left`} aria-pressed={path === id} onClick={() => setPath(id)}>
-      <span className="font-semibold">{title}</span>
-      <span className="text-sm font-normal opacity-80">{text}</span>
-    </button>
-  );
+  const entries: Array<["a" | "b" | "c", string, string]> = [
+    ["a", t.start.a, t.start.aText],
+    ["b", t.start.b, t.start.bText],
+    ["c", t.start.c, t.start.cText],
+  ];
 
   return (
     <div className="grid gap-6">
-      <h2 className="text-xl font-semibold">{t.start.title}</h2>
       <div className="grid gap-3 md:grid-cols-3">
-        {card("a", t.start.a, t.start.aText)}
-        {card("b", t.start.b, t.start.bText)}
-        {card("c", t.start.c, t.start.cText)}
+        {entries.map(([id, title, text]) => (
+          <ChoiceCard key={id} title={title} text={text} selected={path === id} onSelect={() => setPath(id)} t={t} cta={t.layout.entryCta[id]} />
+        ))}
       </div>
 
       {path === "a" && (
-        <div className="grid gap-4">
-          <Segmented label={t.wizard.kind} value={kind} options={SEED_KINDS.map((k) => [k, t.start.kinds[k]])} onChange={setKind} />
+        <section className="tds-appear grid gap-4" aria-label={t.start.a}>
+          <h3 className="eyebrow">{t.wizard.kind}</h3>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {SEED_KINDS.map((k) => (
+              <button
+                key={k}
+                type="button"
+                className={`btn ${kind === k ? "btn-primary" : "btn-ghost"} h-auto w-full flex-col items-start gap-2 whitespace-normal p-4 text-left`}
+                aria-pressed={kind === k}
+                onClick={() => setKind(k)}
+              >
+                <KindGlyph kind={k} />
+                <span className="font-semibold">{t.start.kinds[k]}</span>
+                <span className="text-xs font-normal opacity-80">{t.layout.kindHint[k]}</span>
+              </button>
+            ))}
+          </div>
           <div>
             <button type="button" className="btn btn-primary" onClick={() => onDesign(kind)}>
-              {t.start.aGo}
+              {t.layout.entryCta.a} →
             </button>
           </div>
-        </div>
+        </section>
       )}
       {path === "b" && <ImportPanel t={t} onLoaded={onLoaded} />}
       {path === "c" && (analysisEnabled ? <UrlPanel t={t} lang={lang} onLoaded={onLoaded} /> : <p className="tds-alert tds-alert--warning">{t.url.disabled}</p>)}
     </div>
+  );
+}
+
+/** A tiny drawing of each starting component, so the choice is visual. */
+function KindGlyph({ kind }: { kind: SeedKind }) {
+  const ink = "currentColor";
+  const box = { display: "block", height: 40, width: "100%" } as const;
+  return (
+    <span aria-hidden="true" style={box}>
+      <svg viewBox="0 0 120 40" width="100%" height="40" preserveAspectRatio="xMinYMid meet">
+        {kind === "button" && (
+          <>
+            <rect x="2" y="8" width="70" height="24" rx="12" fill={ink} opacity="0.85" />
+            <rect x="16" y="18" width="42" height="4" rx="2" fill="var(--color-card, #fff)" />
+          </>
+        )}
+        {kind === "card" && (
+          <>
+            <rect x="2" y="2" width="80" height="36" rx="5" fill={ink} opacity="0.18" />
+            <rect x="10" y="9" width="44" height="5" rx="2" fill={ink} opacity="0.8" />
+            <rect x="10" y="19" width="62" height="3" rx="1.5" fill={ink} opacity="0.5" />
+            <rect x="10" y="26" width="50" height="3" rx="1.5" fill={ink} opacity="0.5" />
+          </>
+        )}
+        {kind === "input" && (
+          <>
+            <rect x="2" y="2" width="30" height="4" rx="2" fill={ink} opacity="0.7" />
+            <rect x="2.75" y="12.75" width="94.5" height="22.5" rx="4" fill="none" stroke={ink} strokeWidth="1.5" opacity="0.8" />
+            <rect x="9" y="22" width="36" height="4" rx="2" fill={ink} opacity="0.35" />
+          </>
+        )}
+        {kind === "link" && (
+          <>
+            <rect x="2" y="14" width="56" height="5" rx="2" fill={ink} opacity="0.85" />
+            <rect x="2" y="23" width="56" height="2" fill={ink} opacity="0.85" />
+          </>
+        )}
+      </svg>
+    </span>
   );
 }
 

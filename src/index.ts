@@ -53,6 +53,8 @@ export default defineToolPack({
       icon: "palette",
       keywords: ["css generator", "designsystem", "design tokens", "button generator", "theme", "dark mode", "tailwind", "scss", "barrierefreiheit"],
       component: "@tracht-digital-solutions/tds-tool-devkit/tools/DesignSystemStudio.astro",
+      // A workspace (settings + live preview) needs the full content width.
+      layout: "wide",
       seo: {
         title: "CSS-Designsystem-Generator — Komponenten visuell gestalten",
         description:

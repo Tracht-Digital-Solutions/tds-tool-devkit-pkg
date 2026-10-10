@@ -10,6 +10,7 @@ import { A11yStep } from "./A11yStep";
 import { CodeStep } from "./CodeStep";
 import { ComponentEditor } from "./ComponentEditor";
 import { Segmented, SelectInput } from "./controls";
+import { PreviewToolbar, StepFooter, StepIntro, Stepper, Workspace } from "./Layout";
 import { ExportStep, ProjectsPanel } from "./ExportStep";
 import { PreviewFrame } from "./PreviewFrame";
 import { StartStep } from "./StartStep";
@@ -91,52 +92,69 @@ export default function Studio({ lang = "de" as Lang }: { lang?: Lang }) {
 
   const themeForFrame = previewTheme === "auto" ? null : previewTheme;
   const themeOptions: Array<[string, string]> = [["auto", t.preview.auto], ...project.themes.map((th) => [th.id, th.name] as [string, string])];
+  const stepEnabled = (s: Step) => s === "start" || s === "component" || generated;
+  const stepIndex = STEPS.indexOf(step);
+  const nextStep = STEPS[stepIndex + 1];
+  const prevStep = STEPS[stepIndex - 1];
+  const [introTitle, introText] = t.layout.intro[step]!;
 
-  const previewControls = (
-    <div className="flex flex-wrap items-center gap-3">
+  const themeSelect = (
+    <div className="min-w-36">
+      <SelectInput label={t.preview.theme} value={previewTheme} options={themeOptions} onChange={setPreviewTheme} />
+    </div>
+  );
+
+  const fullToolbar = (
+    <PreviewToolbar>
       <Segmented label={t.preview.view} value={view} options={PREVIEW_VIEWS.map((v) => [v, t.preview.views[v]])} onChange={setView} />
       <Segmented label={t.preview.device} value={device} options={(["desktop", "tablet", "phone"] as const).map((d) => [d, t.preview.devices[d]])} onChange={setDevice} />
-      <div className="min-w-40">
-        <SelectInput label={t.preview.theme} value={previewTheme} options={themeOptions} onChange={setPreviewTheme} />
-      </div>
-    </div>
+      {themeSelect}
+    </PreviewToolbar>
   );
 
-  const systemPreview = (
-    <div className="grid gap-3 lg:sticky lg:top-24">
-      {previewControls}
-      <PreviewFrame css={previewCss} body={previewBody(project.prefix, view, lang)} prefix={project.prefix} theme={themeForFrame} device={device} lang={lang} title={t.preview.frameTitle} height={680} />
-      <p className="text-xs opacity-70">{t.preview.note}</p>
-    </div>
+  const note = (
+    <p className="text-xs" style={{ color: "var(--color-muted)" }}>
+      {t.preview.note}
+    </p>
   );
 
-  const stepEnabled = (s: Step) => s === "start" || s === "component" || generated;
+  const modeToggle = (
+    <Segmented
+      label={t.wizard.mode}
+      value={mode}
+      options={[
+        ["simple", t.wizard.simple],
+        ["expert", t.wizard.expert],
+      ]}
+      onChange={setMode}
+    />
+  );
+
+  // Save state, said once, in the header — not repeated on every step.
+  const status = !touched ? null : access.entitled ? (
+    <span className={dirty ? "chip chip--warning" : "chip chip--success"}>{dirty ? t.unsaved : t.saved}</span>
+  ) : (
+    <span className="chip chip--neutral" title={t.guestNote}>
+      {t.layout.notSaved}
+    </span>
+  );
 
   return (
     <div ref={top} className="dss grid gap-6" style={{ scrollMarginTop: "6rem" }}>
-      <nav aria-label={t.stepsLabel} className="flex flex-wrap items-center gap-2">
-        {STEPS.map((s, i) => (
-          <button
-            key={s}
-            type="button"
-            className={step === s ? "chip chip-active" : "chip"}
-            aria-current={step === s ? "step" : undefined}
-            disabled={!stepEnabled(s)}
-            title={stepEnabled(s) ? undefined : t.lockedStep}
-            onClick={() => go(s)}
-          >
-            {i + 1}. {t.steps[s]}
-          </button>
-        ))}
-      </nav>
+      <header className="grid gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="truncate font-semibold">{project.name}</span>
+            {status}
+          </p>
+          {(step === "component" || step === "system") && modeToggle}
+        </div>
+        <Stepper steps={STEPS} current={step} enabled={stepEnabled} done={(s) => STEPS.indexOf(s) < stepIndex} labels={t.steps} onGo={go} t={t} />
+      </header>
 
-      {!access.entitled && touched && <p className="text-sm opacity-80">{t.guestNote}</p>}
-      {access.entitled && touched && (
-        <p className="text-sm" aria-live="polite">
-          <span className={dirty ? "chip chip--warning" : "chip chip--success"}>{dirty ? t.unsaved : t.saved}</span>
-        </p>
-      )}
       {!access.enabled && <p className="tds-alert tds-alert--warning">{t.exp.disabled}</p>}
+
+      <StepIntro title={introTitle} text={introText} />
 
       {step === "start" && (
         <StartStep
@@ -152,81 +170,51 @@ export default function Studio({ lang = "de" as Lang }: { lang?: Lang }) {
       )}
 
       {step === "component" && (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-          <div className="grid content-start gap-4">
-            <h2 className="text-xl font-semibold">{t.wizard.title}</h2>
-            <Segmented label={t.wizard.kind} value={project.seed.kind} options={(["button", "card", "input", "link"] as const).map((k) => [k, t.start.kinds[k]])} onChange={(k) => act({ type: "seedKind", kind: k })} />
-            <p className="text-xs opacity-70">{t.wizard.kindChangeWarn}</p>
-            <Segmented
-              label={t.wizard.mode}
-              value={mode}
-              options={[
-                ["simple", t.wizard.simple],
-                ["expert", t.wizard.expert],
-              ]}
-              onChange={setMode}
-            />
-            <ComponentEditor style={project.seed.style} t={t} mode={mode} onChange={(path, value) => act({ type: "seed", path, value })} />
-            {generated && <p className="text-sm opacity-80">{t.wizard.regenerateNote}</p>}
-            <div>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setGenerated(true);
-                  setTouched(true);
-                  go("system");
-                }}
-              >
-                {t.wizard.generate}
-              </button>
-            </div>
-          </div>
-          <div className="grid content-start gap-3 lg:sticky lg:top-24">
-            <div className="min-w-40 max-w-xs">
-              <SelectInput label={t.preview.theme} value={previewTheme} options={themeOptions} onChange={setPreviewTheme} />
-            </div>
-            <PreviewFrame
-              css={seedCss}
-              body={seedBody(project.prefix, project.seed.kind, lang)}
-              prefix={project.prefix}
-              theme={themeForFrame}
-              device="fit"
-              lang={lang}
-              title={t.preview.frameTitle}
-              height={420}
-            />
-            <p className="text-xs opacity-70">{t.preview.note}</p>
-          </div>
-        </div>
+        <Workspace
+          t={t}
+          controls={
+            <>
+              <Segmented label={t.wizard.kind} value={project.seed.kind} options={(["button", "card", "input", "link"] as const).map((k) => [k, t.start.kinds[k]])} onChange={(k) => act({ type: "seedKind", kind: k })} />
+              <p className="text-xs" style={{ color: "var(--color-muted)" }}>
+                {t.wizard.kindChangeWarn}
+              </p>
+              <ComponentEditor style={project.seed.style} t={t} mode={mode} onChange={(path, value) => act({ type: "seed", path, value })} />
+              {generated && (
+                <p className="text-sm" style={{ color: "var(--color-muted)" }}>
+                  {t.wizard.regenerateNote}
+                </p>
+              )}
+            </>
+          }
+          preview={
+            <>
+              <PreviewToolbar>{themeSelect}</PreviewToolbar>
+              <PreviewFrame css={seedCss} body={seedBody(project.prefix, project.seed.kind, lang)} prefix={project.prefix} theme={themeForFrame} device="fit" lang={lang} title={t.preview.frameTitle} height={380} />
+              {note}
+            </>
+          }
+        />
       )}
 
       {step === "system" && (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-          <div className="grid content-start gap-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl font-semibold">{t.steps.system}</h2>
-              <Segmented
-                label={t.wizard.mode}
-                value={mode}
-                options={[
-                  ["simple", t.wizard.simple],
-                  ["expert", t.wizard.expert],
-                ]}
-                onChange={setMode}
-              />
-            </div>
-            <SystemStep t={t} project={project} resolved={resolved} dispatch={act} mode={mode} previewTheme={themeForFrame} />
-          </div>
-          {systemPreview}
-        </div>
+        <Workspace
+          t={t}
+          controls={<SystemStep t={t} project={project} resolved={resolved} dispatch={act} mode={mode} previewTheme={themeForFrame} />}
+          preview={
+            <>
+              {fullToolbar}
+              <PreviewFrame css={previewCss} body={previewBody(project.prefix, view, lang)} prefix={project.prefix} theme={themeForFrame} device={device} lang={lang} title={t.preview.frameTitle} height={640} />
+              {note}
+            </>
+          }
+        />
       )}
 
       {step === "preview" && (
         <div className="grid gap-3">
-          {previewControls}
+          {fullToolbar}
           <PreviewFrame css={previewCss} body={previewBody(project.prefix, view, lang)} prefix={project.prefix} theme={themeForFrame} device={device} lang={lang} title={t.preview.frameTitle} height={820} />
-          <p className="text-xs opacity-70">{t.preview.note}</p>
+          {note}
         </div>
       )}
 
@@ -246,13 +234,13 @@ export default function Studio({ lang = "de" as Lang }: { lang?: Lang }) {
       )}
 
       {step === "export" && (
-        <div className="grid gap-8 lg:grid-cols-2">
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
           <section className="grid content-start gap-3">
-            <h2 className="text-xl font-semibold">{t.exp.title}</h2>
+            <h3 className="eyebrow">{t.exp.title}</h3>
             <ExportStep t={t} lang={lang} project={project} access={access} />
           </section>
           <section className="grid content-start gap-3">
-            <h2 className="text-xl font-semibold">{t.projects.title}</h2>
+            <h3 className="eyebrow">{t.projects.title}</h3>
             <ProjectsPanel
               t={t}
               lang={lang}
@@ -279,16 +267,22 @@ export default function Studio({ lang = "de" as Lang }: { lang?: Lang }) {
       )}
 
       {step !== "start" && (
-        <div className="flex flex-wrap justify-between gap-2">
-          <button type="button" className="btn btn-ghost" onClick={() => go(STEPS[Math.max(0, STEPS.indexOf(step) - 1)]!)}>
-            {t.common.back}
-          </button>
-          {step !== "export" && stepEnabled(STEPS[STEPS.indexOf(step) + 1]!) && (
-            <button type="button" className="btn btn-ghost" onClick={() => go(STEPS[STEPS.indexOf(step) + 1]!)}>
-              {t.common.next}
-            </button>
-          )}
-        </div>
+        <StepFooter
+          back={prevStep ? () => go(prevStep) : undefined}
+          backLabel={prevStep ? t.steps[prevStep] : t.common.back}
+          next={
+            step === "component"
+              ? () => {
+                  setGenerated(true);
+                  setTouched(true);
+                  go("system");
+                }
+              : nextStep && stepEnabled(nextStep)
+                ? () => go(nextStep)
+                : undefined
+          }
+          nextLabel={step === "component" ? t.wizard.generate : nextStep ? t.layout.next(t.steps[nextStep]) : undefined}
+        />
       )}
     </div>
   );
