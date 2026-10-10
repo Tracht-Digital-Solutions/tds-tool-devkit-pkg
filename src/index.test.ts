@@ -26,8 +26,8 @@ describe("pack envelope", () => {
     expect(pack.name).toBe("Entwickler & Design");
   });
 
-  it("ships exactly the two documented tools", () => {
-    expect(pack.tools.map((t) => t.id).sort()).toEqual(["contrast-checker", "json-formatter"]);
+  it("ships exactly the three documented tools", () => {
+    expect(pack.tools.map((t) => t.id).sort()).toEqual(["contrast-checker", "design-system-studio", "json-formatter"]);
   });
 });
 
@@ -60,7 +60,7 @@ describe("tool ids and slugs", () => {
 });
 
 describe("required tool fields", () => {
-  it.each([["json-formatter"], ["contrast-checker"]])("%s is fully described", (id) => {
+  it.each([["json-formatter"], ["contrast-checker"], ["design-system-studio"]])("%s is fully described", (id) => {
     const tool = pack.tools.find((t) => t.id === id);
     if (!tool) throw new Error(`tool ${id} is missing from the pack`);
 
@@ -114,6 +114,16 @@ describe("component wiring", () => {
     // source by the site, so dropping them from `files` breaks consumers.
     expect(pkg.files).toContain("tools");
     expect(pkg.files).toContain("islands");
+    // The studio island imports its engine from src/studio as raw source, and
+    // the site imports the export handler from there — both from the TARBALL.
+    expect(pkg.files).toContain("src/studio");
+  });
+
+  it("keeps the studio's entitlement id equal to its catalog id", async () => {
+    // Premium is stored per tool id; a drift would sell an unlock that
+    // unlocks nothing.
+    const { STUDIO_TOOL_ID } = await import("./studio/policy");
+    expect(pack.tools.some((t) => t.id === STUDIO_TOOL_ID)).toBe(true);
   });
 });
 

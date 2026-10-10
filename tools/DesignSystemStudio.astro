@@ -1,0 +1,18 @@
+---
+// Designsystem-Studio tool shell. The engine lives in src/studio (shared with
+// the site's export endpoint); the UI is the hydrated island.
+//
+// `lang` comes from the site's tool-page template; it defaults to German like
+// every other shell in this pack.
+import Studio from "../islands/studio/Studio.tsx";
+
+interface Props {
+  lang?: "de" | "en";
+}
+
+const { lang = "de" } = Astro.props;
+---
+
+<div class="tool tool--designsystem">
+  <Studio client:load lang={lang} />
+</div>

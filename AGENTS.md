@@ -1,9 +1,11 @@
 # AGENTS.md — tds-tool-devkit-pkg
 
-Tool pack for the public tools platform: JSON formatter and WCAG contrast checker.
-It builds against `@tracht-digital-solutions/tds-tools-contract` and is composed into
-`tds-tools-frontend` at build time. Both tools run fully in the browser, with no
-dependencies and no network.
+Tool pack for the public tools platform: JSON formatter, WCAG contrast checker and the
+Designsystem-Studio (visual CSS / design-system generator). It builds against
+`@tracht-digital-solutions/tds-tools-contract` and is composed into `tds-tools-frontend`
+at build time. No runtime dependencies. The first two tools have no network; the studio
+calls `tds-ext-tools-pkg` (access, Premium projects, URL fetch) and the site's
+`/tds/studio/export`.
 
 The platform rules (unique ids, package-subpath components, contract stability)
 live in `tds-tools-contract-pkg/AGENTS.md`. Read that first.
@@ -13,7 +15,7 @@ live in `tds-tools-contract-pkg/AGENTS.md`. Read that first.
 ```bash
 npm install --no-package-lock   # never npm ci; CI has no lockfile
 npm run build                   # tsup, compiles src/index.ts only
-npm run type-check              # tsc, covers src/** only
+npm run type-check              # tsc on src/**, plus src + islands/studio (tsconfig.islands.json)
 npm run test:run                # vitest
 npm run lint:primitives         # fails on a control without a shared class
 ```
@@ -25,15 +27,18 @@ npm run lint:primitives         # fails on a control without a shared class
 - Ship no CSS. Every control carries a shared `tds-shared` class.
 - `component` in the manifest is a package subpath resolved via `exports`, never a relative path.
 - Tool `id` and `slug` stay unique across all composed packs.
-- Stay inside the `0.2.x` line. The site pins `^0.2.0`, so a minor bump needs a coordinated repin.
+- Stay inside the `0.2.x` line. The site pins `^0.2.3` (first release with the studio), so a minor bump needs a coordinated repin.
 - Keep the WCAG sRGB linearisation (`0.03928` threshold) intact.
 - The real gate for `islands/` and `tools/` is the `tds-tools-frontend` build, not `type-check` here.
+- `src/studio` ships as raw source (`files`, `exports["./studio/*"]`); the island and the site's export route import it from the tarball.
+- Studio: no AI, no randomness, no guest persistence (no localStorage/IndexedDB). Exports are HTML/CSS only, never JavaScript.
 
 ## Topic files
 
 | File | Read before |
 |---|---|
 | [docs/agents/architecture.md](docs/agents/architecture.md) | Changing the manifest, the file layout, or the JSON/contrast logic |
+| [docs/agents/studio.md](docs/agents/studio.md) | Touching anything under `src/studio/` or `islands/studio/` |
 | [docs/agents/conventions.md](docs/agents/conventions.md) | Touching any markup or styling in `islands/` or `tools/` |
 | [docs/agents/testing.md](docs/agents/testing.md) | Writing or changing tests |
 

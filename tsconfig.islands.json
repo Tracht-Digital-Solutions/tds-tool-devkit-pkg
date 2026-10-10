@@ -1,0 +1,14 @@
+{
+  // Type-checks the studio islands with the engine. The main
+  // tsconfig covers src/ only (it also drives the d.ts build); without this
+  // file a wrong prop in islands/ would only surface in the site build.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "rootDir": ".",
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src/**/*", "islands/studio/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+}

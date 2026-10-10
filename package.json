@@ -1,7 +1,7 @@
 {
   "name": "@tracht-digital-solutions/tds-tool-devkit",
   "version": "0.2.2",
-  "description": "JSON & design utilities for the TDS tools platform: JSON formatter/validator + WCAG contrast checker. Fully client-side.",
+  "description": "JSON & design utilities for the TDS tools platform: JSON formatter/validator, WCAG contrast checker and the Designsystem-Studio (visual CSS & design-system generator). Fully client-side except the studio's export/analysis endpoints.",
   "license": "UNLICENSED",
   "private": false,
   "type": "module",
@@ -9,6 +9,7 @@
     "dist",
     "tools",
     "islands",
+    "src/studio",
     "README.md"
   ],
   "exports": {
@@ -18,11 +19,13 @@
       "require": "./dist/index.cjs"
     },
     "./tools/*": "./tools/*",
-    "./islands/*": "./islands/*"
+    "./islands/*": "./islands/*",
+    "./studio/*": "./src/studio/*.ts",
+    "./package.json": "./package.json"
   },
   "scripts": {
     "build": "tsup",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.islands.json",
     "lint:primitives": "node scripts/lint-primitives.mjs",
     "clean": "rimraf dist",
     "test": "vitest",
