@@ -4,6 +4,8 @@ import { FORMAT_DESCRIPTIONS, FORMAT_LABELS } from "../../src/studio/export/adap
 import { parseProject, type DesignProject } from "../../src/studio/model";
 import { EXPORT_FORMATS, mayExport, type ExportFormat, type StudioAccess } from "../../src/studio/policy";
 import type { Lang, Strings } from "./strings";
+import { downloadBlob } from "@tracht-digital-solutions/tds-shared/download";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
 
 export function PremiumBox({ t, lang, access }: { t: Strings; lang: Lang; access: StudioAccess }) {
   const [busy, setBusy] = useState(false);
@@ -12,7 +14,7 @@ export function PremiumBox({ t, lang, access }: { t: Strings; lang: Lang; access
   useEffect(() => {
     void loginHref().then(setLogin);
   }, []);
-  if (access.entitled) return <p className="tds-alert tds-alert--success text-sm">{t.premium.active}</p>;
+  if (access.entitled) return <Alert tone="success" className="text-sm">{t.premium.active}</Alert>;
   const price = access.priceCents > 0 ? (access.priceCents / 100).toLocaleString(lang === "de" ? "de-DE" : "en-GB", { style: "currency", currency: access.currency || "EUR" }) : null;
   return (
     <div className="grid gap-3 p-4" style={{ background: "var(--color-soft)" }}>
@@ -52,7 +54,7 @@ export function PremiumBox({ t, lang, access }: { t: Strings; lang: Lang; access
           </div>
         )
       )}
-      {error && <p className="tds-alert tds-alert--danger text-sm">{error}</p>}
+      {error && <Alert className="text-sm">{error}</Alert>}
     </div>
   );
 }
@@ -66,14 +68,7 @@ export function ExportStep({ t, lang, project, access }: { t: Strings; lang: Lan
     setError(null);
     try {
       const { blob, filename } = await requestExport(format, project);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      downloadBlob(blob, filename);
     } catch (e) {
       const err = e as ApiError;
       setError(err.code === "premium_required" ? t.exp.premiumRequired : err.code === "disabled" ? t.exp.disabled : t.exp.failed);
@@ -108,9 +103,9 @@ export function ExportStep({ t, lang, project, access }: { t: Strings; lang: Lan
         })}
       </ul>
       {error && (
-        <p className="tds-alert tds-alert--danger" role="alert">
+        <Alert>
           {error}
-        </p>
+        </Alert>
       )}
     </div>
   );
@@ -244,7 +239,7 @@ export function ProjectsPanel({
                   {t.projects.updated} {new Date(p.updated_at.replace(" ", "T")).toLocaleString(lang === "de" ? "de-DE" : "en-GB")}
                 </span>
               </div>
-              {confirmOpen === p.id && <p className="tds-alert tds-alert--warning text-sm">{t.projects.openWarn}</p>}
+              {confirmOpen === p.id && <Alert tone="warning" className="text-sm">{t.projects.openWarn}</Alert>}
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="btn btn-ghost" onClick={() => void open(p.id)}>
                   {t.projects.open}

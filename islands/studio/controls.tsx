@@ -33,27 +33,8 @@ export function Section({ title, children, open = false }: { title: string; chil
   );
 }
 
-export function Segmented<T extends string | number>({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: T;
-  options: Array<[T, string]>;
-  onChange: (v: T) => void;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
-      {options.map(([v, text]) => (
-        <button key={String(v)} type="button" className={value === v ? "chip chip-active" : "chip"} aria-pressed={value === v} onClick={() => onChange(v)}>
-          {text}
-        </button>
-      ))}
-    </div>
-  );
-}
+/** The single-choice chip row lives in tds-shared (0.59). */
+export { Segmented } from "@tracht-digital-solutions/tds-shared/components";
 
 /** A range slider with a number box beside it; both edit the same value. */
 export function NumberInput({
@@ -265,27 +246,4 @@ export function SourceBadge({ source, t }: { source?: string; t: Strings }) {
   if (!source) return null;
   const tone = source === "manual" || source === "locked" ? "chip chip--info" : source === "imported" || source === "seed" ? "chip chip--success" : "chip chip--neutral";
   return <span className={`${tone} text-xs`}>{t.sources[source] ?? source}</span>;
-}
-
-/** Copies text; falls back to a hidden textarea where the async API is unavailable. */
-export async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
-    } catch {
-      return false;
-    }
-  }
 }

@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { auditProject, type CheckStatus, type Finding, type Suggestion } from "../../src/studio/a11y";
 import type { ResolvedProject } from "../../src/studio/resolve";
-import { copyText, Segmented } from "./controls";
+import { Segmented } from "./controls";
 import type { Strings } from "./strings";
+import { useCopyFlag } from "@tracht-digital-solutions/tds-shared/clipboard";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
 
 type Filter = "problems" | "warn" | "pass" | "manual" | "all";
 
@@ -31,7 +33,7 @@ export function A11yStep({
   const [themeId, setThemeId] = useState<string>("all");
   const [pending, setPending] = useState<string | null>(null);
   const [applied, setApplied] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyFlag(1800);
 
   const visible = report.findings.filter((f) => {
     if (themeId !== "all" && f.themeId && f.themeId !== themeId) return false;
@@ -69,7 +71,7 @@ export function A11yStep({
 
   return (
     <div className="grid gap-5">
-      <p className="tds-alert tds-alert--warning text-sm">{t.a11y.disclaimer}</p>
+      <Alert tone="warning" className="text-sm">{t.a11y.disclaimer}</Alert>
       <div className="flex flex-wrap items-center gap-2" aria-live="polite">
         <span className="chip chip--danger">
           {report.counts.fail} {t.a11y.filters.problems}
@@ -88,8 +90,8 @@ export function A11yStep({
         <Segmented label={t.a11y.title} value={filter} options={(["problems", "warn", "pass", "manual", "all"] as const).map((k) => [k, t.a11y.filters[k]])} onChange={setFilter} />
         <Segmented label={t.preview.theme} value={themeId} options={[["all", t.a11y.allThemes] as [string, string], ...resolved.themes.map((th) => [th.def.id, th.def.name] as [string, string])]} onChange={setThemeId} />
       </div>
-      {applied && <p className="tds-alert tds-alert--success text-sm">{t.a11y.applied}</p>}
-      {report.counts.fail === 0 && !applied && <p className="tds-alert tds-alert--success text-sm">{t.a11y.noProblems}</p>}
+      {applied && <Alert tone="success" className="text-sm">{t.a11y.applied}</Alert>}
+      {report.counts.fail === 0 && !applied && <Alert tone="success" className="text-sm">{t.a11y.noProblems}</Alert>}
       {visible.length === 0 ? (
         <p className="tds-empty">{t.a11y.none}</p>
       ) : (
@@ -118,7 +120,7 @@ export function A11yStep({
                     <strong>{t.a11y.suggestion}:</strong> {f.suggestion.text}
                     {f.suggestion.after ? ` (→ ${f.suggestion.after}:1)` : ""}
                   </p>
-                  {pending === f.id && <p className="tds-alert tds-alert--warning text-sm">{t.a11y.overrideWarn}</p>}
+                  {pending === f.id && <Alert tone="warning" className="text-sm">{t.a11y.overrideWarn}</Alert>}
                   <div className="flex flex-wrap gap-2">
                     <button type="button" className="btn btn-primary" onClick={() => apply(f)}>
                       {pending === f.id ? t.a11y.applyAnyway : t.a11y.apply}
@@ -148,10 +150,7 @@ export function A11yStep({
             <button
               type="button"
               className="btn btn-ghost"
-              onClick={async () => {
-                setCopied(await copyText(markdown()));
-                setTimeout(() => setCopied(false), 1800);
-              }}
+              onClick={() => void copy(markdown())}
             >
               {copied ? t.code.copied : t.a11y.copyReport}
             </button>

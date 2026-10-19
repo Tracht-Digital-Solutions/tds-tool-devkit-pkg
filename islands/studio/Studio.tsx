@@ -16,6 +16,7 @@ import { PreviewFrame } from "./PreviewFrame";
 import { StartStep } from "./StartStep";
 import { STRINGS, type Lang } from "./strings";
 import { SystemStep } from "./SystemStep";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
 
 const STEPS = ["start", "component", "system", "preview", "code", "a11y", "export"] as const;
 type Step = (typeof STEPS)[number];
@@ -152,7 +153,7 @@ export default function Studio({ lang = "de" as Lang }: { lang?: Lang }) {
         <Stepper steps={STEPS} current={step} enabled={stepEnabled} done={(s) => STEPS.indexOf(s) < stepIndex} labels={t.steps} onGo={go} t={t} />
       </header>
 
-      {!access.enabled && <p className="tds-alert tds-alert--warning">{t.exp.disabled}</p>}
+      {!access.enabled && <Alert tone="warning">{t.exp.disabled}</Alert>}
 
       <StepIntro title={introTitle} text={introText} />
 

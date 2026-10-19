@@ -9,6 +9,8 @@ import { Field, Segmented } from "./controls";
 import { ChoiceCard } from "./Layout";
 import { PreviewFrame } from "./PreviewFrame";
 import type { Lang, Strings } from "./strings";
+import { FileDropZone } from "@tracht-digital-solutions/tds-shared/dropzone";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
 
 type ImportKind = "css" | "html" | "json";
 const MAX_FILE = 1_000_000;
@@ -69,7 +71,7 @@ export function StartStep({
         </section>
       )}
       {path === "b" && <ImportPanel t={t} onLoaded={onLoaded} />}
-      {path === "c" && (analysisEnabled ? <UrlPanel t={t} lang={lang} onLoaded={onLoaded} /> : <p className="tds-alert tds-alert--warning">{t.url.disabled}</p>)}
+      {path === "c" && (analysisEnabled ? <UrlPanel t={t} lang={lang} onLoaded={onLoaded} /> : <Alert tone="warning">{t.url.disabled}</Alert>)}
     </div>
   );
 }
@@ -158,15 +160,17 @@ function ImportPanel({ t, onLoaded }: { t: Strings; onLoaded: (p: DesignProject,
       <Field label={t.imp.paste}>
         <textarea className="field-boxed min-h-48 w-full font-mono text-sm" spellCheck={false} value={text} placeholder={placeholder} onChange={(e) => setText(e.target.value)} />
       </Field>
-      <Field label={t.imp.file}>
-        <input type="file" accept=".css,.html,.htm,.json,text/css,text/html,application/json" onChange={(e) => void onFile(e.target.files?.[0])} />
-      </Field>
+      <FileDropZone
+        label={t.imp.file}
+        accept=".css,.html,.htm,.json,text/css,text/html,application/json"
+        onFiles={(files) => void onFile(files[0])}
+      />
       <div>
         <button type="button" className="btn btn-primary" onClick={() => run()}>
           {t.imp.run}
         </button>
       </div>
-      {error && <p className="tds-alert tds-alert--danger">{error}</p>}
+      <Alert>{error}</Alert>
       {result && (
         <div className="tds-appear grid gap-4">
           {result.issues.length > 0 && (
@@ -315,7 +319,7 @@ function UrlPanel({ t, lang, onLoaded }: { t: Strings; lang: Lang; onLoaded: (p:
         </button>
       </div>
       {error && (
-        <p className="tds-alert tds-alert--danger" role="alert">
+        <Alert>
           {error.text}
           {error.location && (
             <>
@@ -325,7 +329,7 @@ function UrlPanel({ t, lang, onLoaded }: { t: Strings; lang: Lang; onLoaded: (p:
               </button>
             </>
           )}
-        </p>
+        </Alert>
       )}
       {analysis && (
         <div className="tds-appear grid gap-5">

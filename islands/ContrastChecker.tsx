@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
 
 /** Parse #rgb / #rrggbb into [r,g,b] 0-255, or null if malformed. */
 function parseHex(hex: string): [number, number, number] | null {
@@ -134,7 +135,7 @@ export default function ContrastChecker({ lang = "de" }: Props) {
         </div>
 
         {!parsed ? (
-          <p className="tds-alert tds-alert--warning">{t.invalidHex}</p>
+          <Alert tone="warning">{t.invalidHex}</Alert>
         ) : (
           <div className="space-y-3">
             {/* Changing a colour recomputes this silently otherwise. */}

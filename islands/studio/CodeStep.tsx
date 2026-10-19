@@ -4,8 +4,9 @@ import { emitCss, singleComponentCss } from "../../src/studio/css";
 import { tokenize, type Token } from "../../src/studio/cssParser";
 import { COMPONENT_KINDS, type ComponentKind } from "../../src/studio/model";
 import type { ResolvedProject } from "../../src/studio/resolve";
-import { copyText, Field, SelectInput } from "./controls";
+import { Field, SelectInput } from "./controls";
 import type { Strings } from "./strings";
+import { useCopyFlag } from "@tracht-digital-solutions/tds-shared/clipboard";
 
 const COLORS: Partial<Record<Token["type"], string>> = {
   comment: "var(--color-muted)",
@@ -47,7 +48,7 @@ export function highlight(css: string): ReactNode[] {
 }
 
 function CodeBlock({ code, t, canCopy }: { code: string; t: Strings; canCopy: boolean }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyFlag(1800);
   const deferred = useDeferredValue(code);
   const nodes = useMemo(() => highlight(deferred), [deferred]);
   return (
@@ -57,10 +58,7 @@ function CodeBlock({ code, t, canCopy }: { code: string; t: Strings; canCopy: bo
           type="button"
           className="btn btn-ghost"
           disabled={!canCopy}
-          onClick={async () => {
-            setCopied(await copyText(code));
-            setTimeout(() => setCopied(false), 1800);
-          }}
+          onClick={() => void copy(code)}
         >
           {copied ? t.code.copied : t.code.copy}
         </button>

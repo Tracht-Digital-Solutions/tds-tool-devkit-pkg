@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { Alert } from "@tracht-digital-solutions/tds-shared/alert";
+import { useCopyFlag } from "@tracht-digital-solutions/tds-shared/clipboard";
 
 /** See the tools-site convention: labels are translated, logic is not. */
 type Lang = "de" | "en";
@@ -125,15 +127,10 @@ export default function JsonFormatter({ lang = "de" }: Props) {
   const [input, setInput] = useState("");
   const [indent, setIndent] = useState<2 | 4 | 0>(2);
   const [result, setResult] = useState<Result | null>(null);
-  const [copied, setCopied] = useState(false);
-  /** Pending "copied" reset, cleared on unmount. */
-  const copyReset = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => {
-    if (copyReset.current !== null) clearTimeout(copyReset.current);
-  }, []);
+  const { copied, copy: copyFlag, reset: resetCopied } = useCopyFlag();
 
   const run = (minify: boolean) => {
-    setCopied(false);
+    resetCopied();
     if (!input.trim()) {
       setResult({ ok: false, error: t.enterJson });
       return;
@@ -147,19 +144,7 @@ export default function JsonFormatter({ lang = "de" }: Props) {
     }
   };
 
-  const copy = async () => {
-    if (!result?.output) return;
-    try {
-      await navigator.clipboard.writeText(result.output);
-      setCopied(true);
-      // Tracked so unmount can clear it: a pending timer would otherwise set
-      // state on a component the navigation already tore down.
-      if (copyReset.current !== null) clearTimeout(copyReset.current);
-      copyReset.current = setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setCopied(false);
-    }
-  };
+  const copy = () => void copyFlag(result?.output ?? "");
 
   // Geometry/border/padding from the shared primitive; the pack ships no CSS.
   const field = "field-boxed w-full font-mono text-sm";
@@ -184,7 +169,7 @@ export default function JsonFormatter({ lang = "de" }: Props) {
         </label>
       </div>
 
-      {result?.ok === false && <p className="tds-alert tds-alert--danger tds-appear">{result.error}</p>}
+      {result?.ok === false && <Alert>{result.error}</Alert>}
 
       {result?.ok && result.output !== undefined && (
         // tds-appear (tds-shared): the answer fades into place as it is
