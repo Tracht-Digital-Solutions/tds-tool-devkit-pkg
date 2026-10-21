@@ -455,7 +455,7 @@ const MANUAL: Array<[string, string, Level, string]> = [
   ["3.1.1 Sprache der Seite", "lang-Attribut", "A", "Die Seite muss ihre Sprache im <html lang> angeben."],
   ["3.3.1 Fehlererkennung", "Fehlermeldungen", "A", "Formularfehler müssen als Text beschrieben werden, nicht nur farbig."],
   ["1.4.10 Umbruch", "Reflow bei 320px", "AA", "Das erzeugte CSS bricht flüssig um; ob der echte Inhalt bei 320px ohne horizontales Scrollen auskommt, muss an der Seite geprüft werden."],
-  ["1.4.12 Textabstand", "Nutzerdefinierte Abstände", "AA", "Prüfen Sie, ob Inhalte bei vergrößerten Zeilen- und Buchstabenabständen nicht abgeschnitten werden."],
+  ["1.4.12 Textabstand", "Nutzerdefinierte Abstände", "AA", "Prüfen, ob Inhalte bei vergrößerten Zeilen- und Buchstabenabständen nicht abgeschnitten werden."],
 ];
 
 export function auditProject(r: ResolvedProject): Report {

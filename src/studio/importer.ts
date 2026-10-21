@@ -745,7 +745,7 @@ export function importCss(cssText: string, parse: ParseHtml = browserParse): Imp
   const unmapped: string[] = [];
   for (const node of nodes) {
     if (node.type === "at" && node.name === "import") {
-      notes.add(`@import ${node.prelude} wurde nicht übernommen — bitte am Anfang Ihrer eigenen Datei einbinden.`);
+      notes.add(`@import ${node.prelude} wurde nicht übernommen — bitte am Anfang der eigenen Datei einbinden.`);
       continue;
     }
     if (node.type === "rule") {
@@ -988,7 +988,7 @@ export function analyzePage(page: FetchedPage, parse: ParseHtml = browserParse):
   );
   for (const s of page.skipped ?? []) notes.add(`Stylesheet nicht geladen (${s.reason}): ${s.url}`);
   if (page.stylesheets.length === 0 && inlineCss.length === 0) notes.add("Die Seite liefert kein auswertbares CSS — die meisten Werte sind abgeleitet, nicht gefunden.");
-  notes.add("Schriftarten werden nur namentlich übernommen; Webfonts müssen Sie selbst lizenzieren und einbinden.");
+  notes.add("Schriftarten werden nur namentlich übernommen; Webfonts sind selbst zu lizenzieren und einzubinden.");
 
   const project = finish("url", seedKind, style, values, { url: page.finalUrl ?? page.url }, notes);
   try {

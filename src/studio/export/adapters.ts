@@ -108,7 +108,7 @@ function readme(r: ResolvedProject, included: ExportFormat[], omitted: ExportFor
     `- Footer: \`.${p}-footer\`, \`.${p}-footer__links\``,
     `- Layout: \`.${p}-container\`, \`.${p}-section\`, \`.${p}-grid\`, \`.${p}-stack\`, \`.${p}-row\``,
     "",
-    "Beispiele: `examples/`. Die Navigation-Toggle-Schaltfläche ist rein gestalterisch; das Öffnen des Menüs müssen Sie selbst umsetzen.",
+    "Beispiele: `examples/`. Die Navigation-Toggle-Schaltfläche ist rein gestalterisch; das Öffnen des Menüs ist selbst umzusetzen.",
     "",
     "## Ebenen",
     "",
@@ -119,7 +119,7 @@ function readme(r: ResolvedProject, included: ExportFormat[], omitted: ExportFor
     ...included.map((f) => `- ${FORMAT_NOTES[f]}`),
   ];
   if (omitted.length) {
-    lines.push("", `Nicht enthalten (für Ihr Konto nicht freigeschaltet): ${omitted.join(", ")}.`);
+    lines.push("", `Nicht enthalten (für dieses Konto nicht freigeschaltet): ${omitted.join(", ")}.`);
   }
   lines.push(
     "",
